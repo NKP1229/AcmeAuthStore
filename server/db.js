@@ -4,6 +4,8 @@ const client = new pg.Client(
 );
 const uuid = require("uuid");
 const bcrypt = require("bcrypt");
+const JWT_SECRET = process.env.JWT_SECRET || "1234";
+const jwt = require("jsonwebtoken");
 
 const createTables = async () => {
   const SQL = `
@@ -64,12 +66,15 @@ const destroyFavorite = async ({ user_id, id }) => {
   await client.query(SQL, [user_id, id]);
 };
 
+const setToken = (id) => {
+  return jwt.sign({ id }, JWT_SECRET, { expiresIn: "8h" });
+};
+
 const authenticate = async ({ username, password }) => {
   const sql = `SELECT password FROM users WHERE username=$1;`;
   const result = await client.query(sql, [username]);
   const hashedPass = result.rows[0].password;
   const checkPass = await bcrypt.compare(password, hashedPass);
-  console.log("checkedPass: ", checkPass);
   if (!checkPass) {
     const error = new Error("not authorized");
     error.status = 401;
@@ -84,7 +89,8 @@ const authenticate = async ({ username, password }) => {
     error.status = 401;
     throw error;
   }
-  return { token: response.rows[0].id };
+  const token = setToken(response.rows[0].id);
+  return { token };
 };
 
 const findUserWithToken = async (id) => {
