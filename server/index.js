@@ -69,11 +69,9 @@ app.get("/api/users/:id/favorites", async (req, res, next) => {
       if (req.userId == req.params.id) {
         res.send(await fetchFavorites(req.params.id));
       } else {
-        return res
-          .status(403)
-          .json({
-            error: `incorrect token provided; userId:${req.userId}, params:${req.params.id}`,
-          });
+        return res.status(403).json({
+          error: `incorrect token provided;`,
+        });
       }
     }
   } catch (ex) {
@@ -83,12 +81,25 @@ app.get("/api/users/:id/favorites", async (req, res, next) => {
 
 app.post("/api/users/:id/favorites", async (req, res, next) => {
   try {
-    res.status(201).send(
-      await createFavorite({
-        user_id: req.params.id,
-        product_id: req.body.product_id,
-      })
-    );
+    const token = req.headers.authorization?.slice(7);
+    if (!token) {
+      return res.status(403).json({ error: "No token provided" });
+    } else {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      req.userId = decoded.id;
+      if (req.userId == req.params.id) {
+        res.status(201).send(
+          await createFavorite({
+            user_id: req.params.id,
+            product_id: req.body.product_id,
+          })
+        );
+      } else {
+        return res.status(403).json({
+          error: `incorrect token provided;`,
+        });
+      }
+    }
   } catch (ex) {
     next(ex);
   }
