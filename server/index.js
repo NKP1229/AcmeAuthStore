@@ -37,7 +37,6 @@ app.post("/api/auth/login", async (req, res, next) => {
 
 app.get("/api/auth/me", async (req, res, next) => {
   try {
-    console.log("AUTHORIZATION?= ", req.headers.authorization);
     const token = req.headers.authorization?.slice(7);
     if (!token) {
       return res.status(403).json({ error: "No token provided" });
