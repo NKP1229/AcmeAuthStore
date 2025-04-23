@@ -106,8 +106,24 @@ app.post("/api/users/:id/favorites", async (req, res, next) => {
 
 app.delete("/api/users/:user_id/favorites/:id", async (req, res, next) => {
   try {
-    await destroyFavorite({ user_id: req.params.user_id, id: req.params.id });
-    res.sendStatus(204);
+    const token = req.headers.authorization?.slice(7);
+    if (!token) {
+      return res.status(403).json({ error: "No token provided" });
+    } else {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      req.userId = decoded.id;
+      if (req.userId == req.params.user_id) {
+        await destroyFavorite({
+          user_id: req.params.user_id,
+          id: req.params.id,
+        });
+        res.sendStatus(204);
+      } else {
+        return res.status(403).json({
+          error: `incorrect token provided;`,
+        });
+      }
+    }
   } catch (ex) {
     next(ex);
   }
