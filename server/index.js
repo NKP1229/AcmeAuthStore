@@ -57,6 +57,14 @@ app.get("/api/users", async (req, res, next) => {
   }
 });
 
+app.post("/api/users/register", async (req, res, next) => {
+  try {
+    res.send(await createUser(req.body));
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.get("/api/users/:id/favorites", async (req, res, next) => {
   try {
     const token = req.headers.authorization?.slice(7);
