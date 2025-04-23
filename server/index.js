@@ -13,6 +13,8 @@ const {
 } = require("./db");
 const express = require("express");
 const app = express();
+const jwt = require("jsonwebtoken");
+const JWT_SECRET = process.env.JWT_SECRET || "1234";
 app.use(express.json());
 
 //for deployment only
@@ -37,9 +39,16 @@ app.post("/api/auth/login", async (req, res, next) => {
 app.get("/api/auth/me", async (req, res, next) => {
   try {
     console.log("AUTHORIZATION?= ", req.headers.authorization);
-    res.send(await findUserWithToken(req.headers.authorization));
-  } catch (ex) {
-    next(ex);
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      return res.status(403).json({ error: "No token provided" });
+    }
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.userId = decoded.id;
+    // res.send(await findUserWithToken(req.headers.authorization));
+    res.send(await findUserWithToken(req.userId));
+  } catch (error) {
+    next(error);
   }
 });
 

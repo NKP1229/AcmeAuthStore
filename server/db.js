@@ -71,33 +71,28 @@ const setToken = (id) => {
 };
 
 const authenticate = async ({ username, password }) => {
-  const sql = `SELECT password FROM users WHERE username=$1;`;
-  const result = await client.query(sql, [username]);
-  const hashedPass = result.rows[0].password;
-  const checkPass = await bcrypt.compare(password, hashedPass);
-  if (!checkPass) {
-    const error = new Error("not authorized");
-    error.status = 401;
-    throw error;
-  }
   const SQL = `
-    SELECT id, username FROM users WHERE username=$1 AND password=$2;
+    SELECT * FROM users WHERE username=$1;
   `;
-  const response = await client.query(SQL, [username, hashedPass]);
-  if (!response.rows.length) {
+  const response = await client.query(SQL, [username]);
+  const hashedPass = response.rows[0].password;
+  const checkPass = await bcrypt.compare(password, hashedPass);
+  if (!response.rows.length || !checkPass) {
     const error = Error("not authorized");
     error.status = 401;
     throw error;
   }
+  console.log(response.rows[0].id);
   const token = setToken(response.rows[0].id);
   return { token };
 };
 
-const findUserWithToken = async (id) => {
+const findUserWithToken = async (userId) => {
   const SQL = `
     SELECT id, username FROM users WHERE id=$1;
   `;
-  const response = await client.query(SQL, [id]);
+  console.log("looking for userid: ", userId);
+  const response = await client.query(SQL, [userId]);
   if (!response.rows.length) {
     const error = Error("not authorized");
     error.status = 401;
