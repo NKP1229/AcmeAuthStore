@@ -4,6 +4,7 @@ const client = new pg.Client(
 );
 const uuid = require("uuid");
 const bcrypt = require("bcrypt");
+const express = require("express");
 const JWT_SECRET = process.env.JWT_SECRET || "1234";
 const jwt = require("jsonwebtoken");
 
@@ -91,7 +92,6 @@ const findUserWithToken = async (userId) => {
   const SQL = `
     SELECT id, username FROM users WHERE id=$1;
   `;
-  console.log("looking for userid: ", userId);
   const response = await client.query(SQL, [userId]);
   if (!response.rows.length) {
     const error = Error("not authorized");
